@@ -80,8 +80,8 @@ Resources:
         given_name: given_name
         family_name: family_name
       ProviderDetails:
-        client_id: '{{resolve:ssm:facebook/client/id:1}}'
-        client_secret: '{{resolve:ssm:facebook/client/secret:1}}'
+        client_id: '{{ secrets.FACEBOOK_CLIENT_ID }}'
+        client_secret: '{{ secrets.FACEBOOK_CLIENT_SECRET }}'
         authorize_scopes: email
       ProviderType: Facebook
       UserPoolId: !Ref UserPool

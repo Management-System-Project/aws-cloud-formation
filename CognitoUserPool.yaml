@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 
-Description: The template crates a Cognito User Pool with Cognito And Facebook authentication options
+Description: The template crates a Cognito User Pool with Cognito, Facebook and Google authentication options
 
 
 Resources:
@@ -15,7 +15,7 @@ Resources:
         SourceArn: arn:aws:ses:eu-north-1:781207506759:identity/info@glacies.store
         ReplyToEmailAddress: info@glacies.store
 
-      MfaConfiguration: OFF
+      MfaConfiguration: 'OFF'
       AdminCreateUserConfig:
         AllowAdminCreateUserOnly: false
 
@@ -36,10 +36,6 @@ Resources:
           Required: false
           Mutable: true
         - AttributeDataType: String
-          Name: password
-          Required: true
-          Mutable: true
-        - AttributeDataType: String
           Name: given_name
           Required: true
           Mutable: true
@@ -47,6 +43,11 @@ Resources:
           Name: family_name
           Required: true
           Mutable: true
+        - AttributeDataType: String
+          Name: uuid
+          Required: false
+          Mutable: false
+
 
   UserPoolClient:
     Type: 'AWS::Cognito::UserPoolClient'
@@ -60,30 +61,47 @@ Resources:
       SupportedIdentityProviders:
         - COGNITO
         - Facebook
+        - Google
       AllowedOAuthFlows:
         - code
       AllowedOAuthScopes:
         - email
         - openid
+        - profile
       CallbackURLs:
         - 'https://glacies.store/'
       LogoutURLs:
         - 'https://glacies.store/logout'
       AllowedOAuthFlowsUserPoolClient: true
 
-  UserPoolIdentityProvider:
+  FacebookUserPoolIdentityProvider:
     Type: 'AWS::Cognito::UserPoolIdentityProvider'
     Properties:
       ProviderName: Facebook
       AttributeMapping:
         email: email
+        given_name: first_name
+        family_name: last_name
+      ProviderDetails:
+        client_id: '{{resolve:ssm:/facebook/client/id:1}}'
+        client_secret: '{{resolve:ssm:/facebook/client/secret:1}}'
+        authorize_scopes: 'profile email'
+      ProviderType: Facebook
+      UserPoolId: !Ref UserPool
+
+  GoogleUserPoolIdentityProvider:
+    Type: 'AWS::Cognito::UserPoolIdentityProvider'
+    Properties:
+      ProviderName: Google
+      AttributeMapping:
+        email: email
         given_name: given_name
         family_name: family_name
       ProviderDetails:
-        client_id: '{{ secrets.FACEBOOK_CLIENT_ID }}'
-        client_secret: '{{ secrets.FACEBOOK_CLIENT_SECRET }}'
-        authorize_scopes: email
-      ProviderType: Facebook
+        client_id: '{{resolve:ssm:/google/client/id:1}}'
+        client_secret: '{{resolve:ssm:/google/client/secret:1}}'
+        authorize_scopes: 'profile email'
+      ProviderType: Google
       UserPoolId: !Ref UserPool
 
   SellerGroup:
@@ -103,6 +121,7 @@ Resources:
     Properties:
       GroupName: Employees
       UserPoolId: !Ref UserPool
+
 Outputs:
   UserPoolId:
     Description: The ID of the created User Pool

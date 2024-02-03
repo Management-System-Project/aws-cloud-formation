@@ -1,0 +1,36 @@
+Resources:
+  RedisCacheCluster:
+    Type: 'AWS::ElastiCache::CacheCluster'
+    Properties:
+      Engine: 'redis'
+      CacheNodeType: 'cache.t3.micro'
+      NumCacheNodes: 1
+      VpcSecurityGroupIds:
+        - !GetAtt CacheSecurityGroup.GroupId
+      CacheSubnetGroupName: !Ref RedisCacheSubnetGroup
+      EngineVersion: '7.1'
+      Port: 6379
+  RedisCacheSubnetGroup:
+    Type: 'AWS::ElastiCache::SubnetGroup'
+    Properties:
+      Description: 'Subnet group for Redis cache'
+      SubnetIds:
+        - 'subnet-08861e40e8c90c397'
+  CacheSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'Security group for Redis cache'
+      SecurityGroupIngress:
+        - IpProtocol: 'tcp'
+          FromPort: 6379
+          ToPort: 6379
+          CidrIp: '0.0.0.0/0'
+          
+Outputs:
+  CacheClusterEndpoint:
+    Description: 'The connection endpoint for the ElastiCache instance'
+    Value: !GetAtt RedisCacheCluster.RedisEndpoint.Address
+  CacheClusterPort:
+    Description: 'The port for the ElastiCache instance'
+    Value: !GetAtt RedisCacheCluster.RedisEndpoint.Port
+
